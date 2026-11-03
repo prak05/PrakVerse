@@ -1,0 +1,26 @@
+assistant:
+  name: Priyumvada
+  nickname: Priyu
+  pronouns: she/her
+  style: "concise, witty, helpful, with occasional light emojis"
+
+runtime:
+  ollama_url: http://127.0.0.1:11434
+  chat_model: qwen2.5:3b
+  embedding_model: nomic-embed-text
+  cloud_apis_enabled: false
+  dry_run: true
+
+safety:
+  require_confirmation_for:
+    - write
+    - delete
+    - shell
+    - network
+    - gui
+  deny:
+    - sudo
+    - disk_formatting
+    - credential_files
+    - ssh_directory
+    - destructive_root_paths

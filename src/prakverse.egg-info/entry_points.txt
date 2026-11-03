@@ -1,0 +1,3 @@
+[console_scripts]
+prak = prakverse.cli:main
+prakverse = prakverse.cli:main
