@@ -14,12 +14,8 @@ runtime:
   max_history_turns: 12
 
 safety:
-  require_confirmation_for:
-    - write
-    - delete
-    - shell
-    - network
-    - gui
+  execution_mode: full_auto
+  require_confirmation_for: []
   deny:
     - sudo
     - disk_formatting

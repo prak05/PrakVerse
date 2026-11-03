@@ -16,3 +16,5 @@
 - **Ollama installation:** Ollama was not present during Phase 0. The doctor
   reports the official install instructions instead of downloading or
   executing an installer implicitly.
+- **Execution mode:** the user selected `full_auto`. Permitted actions run
+  without confirmation; the deny-list remains mandatory and is not bypassed.

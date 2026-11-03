@@ -7,9 +7,14 @@ The project is intentionally starting without paid APIs or cloud dependencies:
 
 - local memory in SQLite and FTS5;
 - local files and project indexes;
-- explicit approval before writes, destructive actions, or external actions;
+- full automatic execution for permitted actions, with a permanent deny-list;
 - replaceable local model backends;
 - no credentials required for the core.
+
+The current execution mode is `full_auto`: permitted tools do not prompt for
+confirmation. The deny-list remains mandatory and blocks dangerous operations
+such as `sudo`, disk formatting, credential files, SSH files, and destructive
+root paths.
 
 ## Phase 0: recon and scaffold
 
