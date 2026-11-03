@@ -43,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     listen = subparsers.add_parser("listen", help="Start the local voice loop.")
     listen.add_argument("--audio", type=Path, help="Transcribe one local audio file.")
     listen.add_argument("--no-speak", action="store_true")
+    subparsers.add_parser("up", help="Start the local Textual dashboard.")
 
     remember = subparsers.add_parser("remember", help="Store a local memory.")
     remember.add_argument("content")
@@ -107,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_chat(args.model, args.max_turns)
     if args.command == "listen":
         return run_listen(args.audio, not args.no_speak)
+    if args.command == "up":
+        return run_dashboard()
     if args.command == "plan":
         registry = build_tool_registry()
         steps = tuple(ActionStep(tool) for tool in args.tool)
@@ -278,6 +281,17 @@ def run_listen(audio_path: Path | None, speak: bool) -> int:
         return 0
     print("Voice loop requires a microphone adapter; use --audio for push-to-talk files.")
     print("Wake word target: Hey Priyumvada")
+    return 0
+
+
+def run_dashboard() -> int:
+    try:
+        from .ui.app import PrakVerseApp
+    except RuntimeError as error:
+        print(f"Dashboard unavailable: {error}", file=sys.stderr)
+        print("Install it with: pip install -e '.[ui]'")
+        return 1
+    PrakVerseApp().run()
     return 0
 
 

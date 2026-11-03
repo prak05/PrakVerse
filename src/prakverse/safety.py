@@ -35,7 +35,7 @@ class SafetyPolicy:
         normalized = operation.lower()
         if re.search(r"\bsudo\b|\bmkfs(?:\.[\w-]+)?\b|\bfdisk\b|\bparted\b", normalized):
             raise PermissionError("Blocked by safety policy: privileged or disk operation.")
-        if re.search(r"rm\s+(?:-[a-z]*r[a-z]*\s+)?(?:/|~)(?:\s|$)", normalized):
+        if re.search(r"\brm\b.*(?:^|\s)(?:/|~)(?:\s|$)", normalized):
             raise PermissionError("Blocked by safety policy: destructive root-path deletion.")
         for raw_path in paths:
             path = Path(raw_path).expanduser()

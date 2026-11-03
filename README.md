@@ -88,6 +88,18 @@ use a `name`, optional `description`, and `steps` containing tool names and
 arguments. Local MCP servers can be configured in `mcp.json`; the stdio client
 is available to integrations without requiring a hosted service.
 
+## Phase 7: dashboard and packaging
+
+Install the optional Textual dashboard and start it with:
+
+```bash
+pip install -e '.[ui]'
+prak up
+```
+
+See `ARCHITECTURE.md` and `USER_GUIDE.md` for the system design and local
+service setup. The systemd unit is user-scoped and does not require `sudo`.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories

@@ -21,6 +21,8 @@ def test_deny_list_blocks_dangerous_commands_and_paths() -> None:
     with pytest.raises(PermissionError):
         policy.check("sudo rm -rf /")
     with pytest.raises(PermissionError):
+        policy.check("rm --no-preserve-root -rf /")
+    with pytest.raises(PermissionError):
         policy.check("read", (str(Path.home() / ".ssh" / "id_rsa"),))
     with pytest.raises(PermissionError):
         policy.check("write", ("/tmp/.env",))

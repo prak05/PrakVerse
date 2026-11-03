@@ -1,0 +1,14 @@
+[Unit]
+Description=PrakVerse local assistant
+After=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/PrakVerse
+ExecStart=%h/PrakVerse/.venv/bin/prak up
+Restart=on-failure
+RestartSec=5
+Environment=PRAKVERSE_DATA_DIR=%h/PrakVerse/data
+
+[Install]
+WantedBy=default.target
