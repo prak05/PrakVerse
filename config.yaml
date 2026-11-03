@@ -12,6 +12,7 @@ runtime:
   cloud_apis_enabled: false
   dry_run: true
   max_history_turns: 12
+  audit_log: data/audit.jsonl
 
 safety:
   execution_mode: full_auto

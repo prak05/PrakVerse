@@ -16,6 +16,10 @@ confirmation. The deny-list remains mandatory and blocks dangerous operations
 such as `sudo`, disk formatting, credential files, SSH files, and destructive
 root paths.
 
+Phase 2 adds a safety-gated local tool registry and an append-only audit log at
+`data/audit.jsonl`. Dry-run mode is enabled by default in `config.yaml`; tool
+integration will use the registry before execution.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories
