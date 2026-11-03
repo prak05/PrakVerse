@@ -10,6 +10,7 @@ from .brain.persona import load_system_prompt
 from .brain.session import ChatSession
 from .config import (
     ASSISTANT_NAME,
+    AUDIT_LOG,
     CHAT_MODEL,
     EMBED_MODEL,
     MEMORY_DB,
@@ -20,6 +21,14 @@ from .config import (
 from .doctor import print_doctor_report
 from .memory import MemoryStore
 from .knowledge import KnowledgeStore
+from .agent.planner import ActionStep, PlanExecutor, TaskPlan
+from .agent.scheduler import Scheduler
+from .agent.skills import SkillLoader
+from .config import SCHEDULE_DB, SKILLS_DIR
+from .safety import SafetyPolicy
+from .tools.audit import AuditLog
+from .tools.local import register_local_tools
+from .tools.registry import ToolContext, ToolRegistry
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,6 +69,22 @@ def build_parser() -> argparse.ArgumentParser:
     fact_subparsers.add_parser("list")
     forget = fact_subparsers.add_parser("forget")
     forget.add_argument("id", type=int)
+    plan = subparsers.add_parser("plan", help="Execute a bounded local action plan.")
+    plan.add_argument("tool", nargs="+", help="Tool names to execute in order.")
+    plan.add_argument("--max-actions", type=int, default=20)
+    skill = subparsers.add_parser("skill", help="List or run local skills.")
+    skill_subparsers = skill.add_subparsers(dest="skill_command", required=True)
+    skill_subparsers.add_parser("list")
+    skill_run = skill_subparsers.add_parser("run")
+    skill_run.add_argument("name")
+    schedule = subparsers.add_parser("schedule", help="Manage recurring local tasks.")
+    schedule_subparsers = schedule.add_subparsers(dest="schedule_command", required=True)
+    schedule_subparsers.add_parser("list")
+    schedule_add = schedule_subparsers.add_parser("add")
+    schedule_add.add_argument("name")
+    schedule_add.add_argument("interval", type=int)
+    schedule_add.add_argument("payload")
+    schedule_subparsers.add_parser("run-due")
     return parser
 
 
@@ -82,6 +107,41 @@ def main(argv: list[str] | None = None) -> int:
         return run_chat(args.model, args.max_turns)
     if args.command == "listen":
         return run_listen(args.audio, not args.no_speak)
+    if args.command == "plan":
+        registry = build_tool_registry()
+        steps = tuple(ActionStep(tool) for tool in args.tool)
+        plan = TaskPlan("CLI action plan", steps, args.max_actions)
+        print("Plan:")
+        print("\n".join(plan.summary()))
+        print_plan_results(PlanExecutor(registry.invoke).execute(plan))
+        return 0
+    if args.command == "skill":
+        loader = SkillLoader(SKILLS_DIR)
+        skills = loader.load_all()
+        if args.skill_command == "list":
+            for skill in skills:
+                print(f"{skill.name}: {skill.description}")
+            return 0
+        selected = next((skill for skill in skills if skill.name == args.name), None)
+        if selected is None:
+            print(f"Skill not found: {args.name}", file=sys.stderr)
+            return 1
+        print("Plan:")
+        print("\n".join(selected.plan.summary()))
+        print_plan_results(PlanExecutor(build_tool_registry().invoke).execute(selected.plan))
+        return 0
+    if args.command == "schedule":
+        scheduler = Scheduler(SCHEDULE_DB)
+        if args.schedule_command == "list":
+            for task in scheduler.list():
+                print(f"#{task.task_id} {task.name} every {task.interval_seconds}s next={task.next_run}")
+        elif args.schedule_command == "add":
+            task = scheduler.add(args.name, args.interval, args.payload)
+            print(f"Scheduled {task.name} for {task.next_run}")
+        else:
+            for outcome in scheduler.run_due(lambda payload: run_skill_payload(payload)):
+                print(outcome)
+        return 0
 
     knowledge = KnowledgeStore(
         MEMORY_DIR,
@@ -135,6 +195,30 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     return 2
+
+
+def build_tool_registry() -> ToolRegistry:
+    registry = ToolRegistry(ToolContext(SafetyPolicy(), AuditLog(AUDIT_LOG)))
+    register_local_tools(registry)
+    return registry
+
+
+def print_plan_results(results: list[dict[str, object]]) -> None:
+    for result in results:
+        print(
+            f"Step {result['step']} [{result['status']}] {result['tool']}: "
+            f"{result.get('result', result.get('error', ''))}"
+        )
+
+
+def run_skill_payload(payload: str) -> list[dict[str, object]]:
+    skill = next(
+        (item for item in SkillLoader(SKILLS_DIR).load_all() if item.name == payload),
+        None,
+    )
+    if skill is None:
+        raise ValueError(f"Skill not found: {payload}")
+    return PlanExecutor(build_tool_registry().invoke).execute(skill.plan)
 
 
 def run_chat(model: str, max_turns: int) -> int:

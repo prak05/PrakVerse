@@ -70,6 +70,24 @@ the response to Piper when a local Piper model is configured. The intended wake
 word is **Hey Priyumvada**. Until microphone dependencies are installed, the
 push-to-talk fallback is `prak chat`.
 
+## Phase 6: bounded autonomy
+
+Plans are visible and capped by an action budget:
+
+```bash
+prak plan system_info list_apps
+prak skill list
+prak skill run my-skill
+prak schedule add morning-notes 86400 my-skill
+prak schedule list
+prak schedule run-due
+```
+
+Drop YAML or Python skills into `skills/` without editing the core. YAML skills
+use a `name`, optional `description`, and `steps` containing tool names and
+arguments. Local MCP servers can be configured in `mcp.json`; the stdio client
+is available to integrations without requiring a hosted service.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories
