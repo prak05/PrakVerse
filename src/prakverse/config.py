@@ -12,6 +12,9 @@ MEMORY_DB = Path(
 AUDIT_LOG = Path(
     os.environ.get("PRAKVERSE_AUDIT_LOG", DATA_DIR / "audit.jsonl")
 ).expanduser()
+MEMORY_DIR = Path(
+    os.environ.get("PRAKVERSE_MEMORY_DIR", DATA_DIR / "knowledge")
+).expanduser()
 
 ASSISTANT_NAME = os.environ.get("PRAKVERSE_ASSISTANT_NAME", "Priyumvada")
 PLATFORM_NAME = "PrakVerse"

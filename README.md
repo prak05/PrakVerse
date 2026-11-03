@@ -20,6 +20,23 @@ Phase 2 adds a safety-gated local tool registry and an append-only audit log at
 `data/audit.jsonl`. Dry-run mode is enabled by default in `config.yaml`; tool
 integration will use the registry before execution.
 
+## Phase 3: local knowledge
+
+Index a folder and search it with source citations:
+
+```bash
+prak ingest ~/Documents
+prak recall "project architecture"
+prak fact remember "PrakVerse is local-first." --source confirmed
+prak fact list
+prak memory export /tmp/prakverse-memory.json
+prak memory wipe
+```
+
+`.env`, SSH, cloud credential, token, password, API-key, and private-key
+patterns are skipped. ChromaDB and Ollama embeddings are used when installed
+and reachable; otherwise the local SQLite lexical index remains available.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories

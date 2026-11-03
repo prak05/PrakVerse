@@ -62,3 +62,21 @@ class OllamaClient:
 
     def chat(self, messages: Sequence[ChatMessage]) -> str:
         return "".join(self.stream_chat(messages))
+
+    def embed(self, text: str) -> list[float]:
+        payload = json.dumps({"model": self.model, "input": text}).encode("utf-8")
+        http_request = request.Request(
+            f"{self.base_url}/api/embed",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with request.urlopen(http_request, timeout=self.timeout) as response:
+                body = json.load(response)
+        except (OSError, error.URLError, error.HTTPError, json.JSONDecodeError) as exc:
+            raise OllamaError(f"Unable to embed with Ollama: {exc}") from exc
+        embeddings = body.get("embeddings")
+        if not embeddings or not isinstance(embeddings[0], list):
+            raise OllamaError("Ollama returned no embedding.")
+        return [float(value) for value in embeddings[0]]

@@ -2,14 +2,24 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from .brain.history import ConversationHistory
 from .brain.ollama import OllamaClient, OllamaError
 from .brain.persona import load_system_prompt
 from .brain.session import ChatSession
-from .config import ASSISTANT_NAME, CHAT_MODEL, MEMORY_DB, OLLAMA_URL, PLATFORM_NAME
+from .config import (
+    ASSISTANT_NAME,
+    CHAT_MODEL,
+    EMBED_MODEL,
+    MEMORY_DB,
+    MEMORY_DIR,
+    OLLAMA_URL,
+    PLATFORM_NAME,
+)
 from .doctor import print_doctor_report
 from .memory import MemoryStore
+from .knowledge import KnowledgeStore
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,6 +39,24 @@ def build_parser() -> argparse.ArgumentParser:
     search = subparsers.add_parser("search", help="Search local memories.")
     search.add_argument("query")
     search.add_argument("--limit", type=int, default=10)
+    ingest = subparsers.add_parser("ingest", help="Index local documents.")
+    ingest.add_argument("path", type=Path)
+    recall = subparsers.add_parser("recall", help="Search indexed documents with citations.")
+    recall.add_argument("query")
+    recall.add_argument("--limit", type=int, default=5)
+    memory = subparsers.add_parser("memory", help="Manage the local knowledge store.")
+    memory_subparsers = memory.add_subparsers(dest="memory_command", required=True)
+    export = memory_subparsers.add_parser("export")
+    export.add_argument("path", type=Path)
+    memory_subparsers.add_parser("wipe")
+    fact = subparsers.add_parser("fact", help="Manage explicitly confirmed facts.")
+    fact_subparsers = fact.add_subparsers(dest="fact_command", required=True)
+    add_fact = fact_subparsers.add_parser("remember")
+    add_fact.add_argument("content")
+    add_fact.add_argument("--source", default="confirmed")
+    fact_subparsers.add_parser("list")
+    forget = fact_subparsers.add_parser("forget")
+    forget.add_argument("id", type=int)
     return parser
 
 
@@ -49,6 +77,39 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "chat":
         return run_chat(args.model, args.max_turns)
+
+    knowledge = KnowledgeStore(
+        MEMORY_DIR,
+        embedder=OllamaClient(OLLAMA_URL, EMBED_MODEL),
+    )
+    if args.command == "ingest":
+        print(knowledge.ingest(args.path))
+        return 0
+    if args.command == "recall":
+        for result in knowledge.search(args.query, args.limit):
+            print(
+                f"[{result['source']}:{result['line_start']}-{result['line_end']}] "
+                f"{result['content']}"
+            )
+        return 0
+    if args.command == "memory":
+        if args.memory_command == "export":
+            knowledge.export(args.path)
+            print(f"Exported knowledge to {args.path}")
+        else:
+            knowledge.wipe()
+            print("Knowledge store wiped.")
+        return 0
+    if args.command == "fact":
+        if args.fact_command == "remember":
+            fact_id = knowledge.add_fact(args.content, args.source)
+            print(f"Stored confirmed fact #{fact_id}")
+        elif args.fact_command == "list":
+            for item in knowledge.list_facts():
+                print(f"#{item['id']} [{item['source']}] {item['content']}")
+        else:
+            print("Forgot fact." if knowledge.forget_fact(args.id) else "Fact not found.")
+        return 0
 
     if args.command == "remember":
         memory = store.add(args.content, args.source)
