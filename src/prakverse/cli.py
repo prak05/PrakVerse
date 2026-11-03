@@ -31,6 +31,9 @@ def build_parser() -> argparse.ArgumentParser:
     chat = subparsers.add_parser("chat", help="Chat with Priyumvada through Ollama.")
     chat.add_argument("--model", default=CHAT_MODEL)
     chat.add_argument("--max-turns", type=int, default=12)
+    listen = subparsers.add_parser("listen", help="Start the local voice loop.")
+    listen.add_argument("--audio", type=Path, help="Transcribe one local audio file.")
+    listen.add_argument("--no-speak", action="store_true")
 
     remember = subparsers.add_parser("remember", help="Store a local memory.")
     remember.add_argument("content")
@@ -77,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "chat":
         return run_chat(args.model, args.max_turns)
+    if args.command == "listen":
+        return run_listen(args.audio, not args.no_speak)
 
     knowledge = KnowledgeStore(
         MEMORY_DIR,
@@ -159,6 +164,36 @@ def run_chat(model: str, max_turns: int) -> int:
             session.history.add_turn(user_content, response)
         except OllamaError as error:
             print(f"\nOllama error: {error}", file=sys.stderr)
+    return 0
+
+
+def run_listen(audio_path: Path | None, speak: bool) -> int:
+    from .voice.pipeline import build_local_pipeline
+    from .voice.speech import VoiceUnavailable
+
+    try:
+        pipeline = build_local_pipeline()
+    except VoiceUnavailable as error:
+        print(f"Voice unavailable: {error}", file=sys.stderr)
+        print(
+            "Push-to-talk fallback: use `prak chat` until local voice dependencies are installed."
+        )
+        return 1
+    session = ChatSession(
+        OllamaClient(OLLAMA_URL, CHAT_MODEL),
+        ConversationHistory(load_system_prompt(), 12),
+    )
+    if audio_path is not None:
+        try:
+            response = pipeline.process_audio(audio_path, session.respond, speak=speak)
+        except Exception as error:
+            print(f"Voice error: {error}", file=sys.stderr)
+            return 1
+        if response:
+            print(response)
+        return 0
+    print("Voice loop requires a microphone adapter; use --audio for push-to-talk files.")
+    print("Wake word target: Hey Priyumvada")
     return 0
 
 

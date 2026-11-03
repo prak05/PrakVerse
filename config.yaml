@@ -14,6 +14,12 @@ runtime:
   max_history_turns: 12
   audit_log: data/audit.jsonl
   memory_dir: data/knowledge
+  voice:
+    wake_word: hey_priyumvada
+    whisper_model: base
+    whisper_device: cpu
+    piper_model: ""
+    push_to_talk: true
 
 safety:
   execution_mode: full_auto

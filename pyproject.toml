@@ -13,6 +13,7 @@ dependencies = []
 memory = ["chromadb>=0.5", "pypdf>=5", "python-docx>=1.1"]
 browser = ["playwright>=1.50"]
 gui = ["pyautogui>=0.9"]
+voice = ["faster-whisper>=1.1", "openwakeword>=0.6", "sounddevice>=0.5", "soundfile>=0.13"]
 
 [project.scripts]
 prak = "prakverse.cli:main"

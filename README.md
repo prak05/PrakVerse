@@ -57,6 +57,19 @@ pip install -e '.[gui]'
 Browser and GUI actions are registered through the same audit and deny-list
 registry as the Phase 2 tools.
 
+## Phase 5: local voice
+
+Voice dependencies are optional:
+
+```bash
+pip install -e '.[voice]'
+```
+
+`prak listen --audio recording.wav` uses faster-whisper locally and can send
+the response to Piper when a local Piper model is configured. The intended wake
+word is **Hey Priyumvada**. Until microphone dependencies are installed, the
+push-to-talk fallback is `prak chat`.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories

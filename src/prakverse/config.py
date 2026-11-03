@@ -22,3 +22,5 @@ PLATFORM_NAME = "PrakVerse"
 CHAT_MODEL = os.environ.get("PRAKVERSE_CHAT_MODEL", "qwen2.5:3b")
 EMBED_MODEL = os.environ.get("PRAKVERSE_EMBED_MODEL", "nomic-embed-text")
 OLLAMA_URL = os.environ.get("PRAKVERSE_OLLAMA_URL", "http://127.0.0.1:11434")
+VOICE_MODEL = os.environ.get("PRAKVERSE_WHISPER_MODEL", "base")
+PIPER_MODEL = os.environ.get("PRAKVERSE_PIPER_MODEL", "")
