@@ -37,6 +37,26 @@ prak memory wipe
 patterns are skipped. ChromaDB and Ollama embeddings are used when installed
 and reachable; otherwise the local SQLite lexical index remains available.
 
+## Phase 4: browser and desktop tools
+
+Optional browser support:
+
+```bash
+pip install -e '.[browser]'
+playwright install chromium
+```
+
+The browser tools support opening, privacy-friendly search, extraction, click,
+fill, and screenshots. Optional GUI support uses PyAutoGUI and detects Wayland
+or X11:
+
+```bash
+pip install -e '.[gui]'
+```
+
+Browser and GUI actions are registered through the same audit and deny-list
+registry as the Phase 2 tools.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories
