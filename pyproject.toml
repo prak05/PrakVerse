@@ -6,6 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "prakverse"
 version = "0.2.0"
 description = "Local-first personal AI operating environment for Prakhar Sharma."
+readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = []
 
