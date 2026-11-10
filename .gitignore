@@ -3,9 +3,9 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 *.egg-info/
-data/*.db
-data/*.sqlite
-data/*.sqlite3
-data/*.jsonl
+build/
+dist/
+data/*
+!data/.gitkeep
 *.swp
 .env

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08090a">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <title>PrakVerse — Priyumvada</title>
+  <style>
+    :root { color-scheme: dark; --bg:#08090a; --panel:#111315; --line:#292d32; --text:#f4f4f5; --muted:#9299a3; --accent:#8b9cff; --ok:#8ee6a5; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 85% 5%,#1b2140 0,transparent 33%),var(--bg); color:var(--text); font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { max-width:1280px; margin:auto; padding:24px; }
+    header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:20px; }
+    h1 { margin:0; font-size:clamp(36px,6vw,78px); letter-spacing:-.07em; line-height:.9; }
+    h2 { margin:0 0 14px; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+    .eyebrow,.mono { color:var(--accent); font:11px ui-monospace,SFMono-Regular,monospace; letter-spacing:.14em; text-transform:uppercase; }
+    .health { display:flex; gap:8px; align-items:center; color:var(--muted); font:11px ui-monospace,monospace; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#ef7777; } .dot.ready { background:var(--ok); }
+    .workspace { display:grid; grid-template-columns:220px minmax(0,1fr) 270px; gap:14px; margin-top:14px; }
+    .panel { background:color-mix(in srgb,var(--panel) 92%,transparent); border:1px solid var(--line); padding:16px; }
+    .sidebar { min-height:600px; } .sidebar button { width:100%; text-align:left; margin-bottom:8px; }
+    button,input { border:1px solid var(--line); background:#171a1e; color:var(--text); padding:11px; border-radius:0; }
+    button { cursor:pointer; font-weight:700; } button:hover { border-color:var(--accent); }
+    button.primary { background:var(--text); color:#08090a; } button.voice { background:var(--accent); color:#08090a; }
+    button.voice.listening { background:#ff8f8f; }
+    .chat { min-height:600px; display:flex; flex-direction:column; }
+    #transcript { flex:1; overflow:auto; min-height:430px; padding-right:4px; }
+    .message { border-left:2px solid var(--line); padding:8px 12px; margin:0 0 12px; white-space:pre-wrap; line-height:1.55; }
+    .message.user { border-color:var(--accent); } .message.priyu { border-color:var(--ok); }
+    .label { display:block; color:var(--muted); font:10px ui-monospace,monospace; letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px; }
+    form { display:flex; gap:8px; margin-top:12px; } input { flex:1; }
+    .activity { min-height:600px; } #activity { color:var(--muted); font:11px ui-monospace,monospace; line-height:1.65; }
+    .activity-line { border-bottom:1px solid var(--line); padding:7px 0; } .hint { color:var(--muted); font-size:12px; line-height:1.5; }
+    #projects { display:grid; gap:7px; } .project { border-bottom:1px solid var(--line); padding:7px 0; font-size:12px; }
+    @media (max-width:980px) { .workspace{grid-template-columns:190px minmax(0,1fr)} .activity{grid-column:1/-1;min-height:auto} }
+    @media (max-width:680px) { main{padding:14px} header{display:block}.workspace{grid-template-columns:1fr}.sidebar{min-height:auto}.chat{min-height:520px} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><div class="eyebrow">PrakVerse / Central Intel / Local Control</div><h1>Priyumvada<span style="color:var(--accent)">.</span></h1><p class="hint">Your private operating intelligence. Local memory, bounded tools, visible actions.</p></div>
+    <div class="health"><span id="health-dot" class="dot"></span><span id="health">CHECKING LOCAL MODEL</span></div>
+  </header>
+  <div class="workspace">
+    <aside class="panel sidebar">
+      <h2>Agent desk</h2>
+      <button class="primary" data-prompt="Give me a concise status report from Central Intel.">Mission status</button>
+      <button data-prompt="What projects are connected to Central Intel?">Project map</button>
+      <button data-prompt="Recall my latest AI and software work.">Recent work</button>
+      <h2 style="margin-top:24px">Connected intel</h2>
+      <div id="projects" class="hint">Loading…</div>
+    </aside>
+    <section class="panel chat">
+      <h2>Priyu channel <span class="mono" id="model"></span></h2>
+      <div id="transcript"><div class="message priyu"><span class="label">Priyumvada / ready</span>Speak naturally or type a mission. I will use local Central Intel when relevant and show the sources used.</div></div>
+      <form id="chat"><input id="message" autocomplete="off" placeholder="Give Priyu a mission…"><button type="submit" class="primary">Send</button><button type="button" class="voice" id="speak">Speak</button></form>
+      <p class="hint" id="voice-status">Push-to-talk ready. Browser microphone permission is required.</p>
+    </section>
+    <aside class="panel activity">
+      <h2>Action trace</h2>
+      <div id="activity"><div class="activity-line">boot / local interface online</div><div class="activity-line">policy / deny-list active</div><div class="activity-line">memory / Central Intel attached</div></div>
+    </aside>
+  </div>
+</main>
+<script>
+const $ = selector => document.querySelector(selector);
+const transcript = $("#transcript"), activity = $("#activity");
+function trace(text) { const line = document.createElement("div"); line.className = "activity-line"; line.textContent = `${new Date().toLocaleTimeString()} / ${text}`; activity.prepend(line); }
+function addMessage(role, text) { const node = document.createElement("div"); node.className = `message ${role}`; node.innerHTML = `<span class="label">${role === "user" ? "You" : "Priyumvada"}</span>`; node.append(document.createTextNode(text)); transcript.append(node); transcript.scrollTop = transcript.scrollHeight; }
+async function loadStatus() {
+  const data = await fetch("/api/status").then(r => r.json());
+  $("#model").textContent = `LOCAL / ${data.model}`;
+  $("#projects").innerHTML = data.projects.map(p => `<div class="project">${p.name}<br><span class="hint">${p.status} · ${p.chunks} chunks</span></div>`).join("") || "<span class='hint'>Run prak intel sync first.</span>";
+  try { await fetch("/api/health"); $("#health").textContent = "OLLAMA READY"; $("#health-dot").classList.add("ready"); trace("model / Ollama ready"); }
+  catch { $("#health").textContent = "OLLAMA OFFLINE"; trace("model / Ollama unavailable"); }
+}
+async function ask(text) {
+  if (!text.trim()) return;
+  addMessage("user", text); trace(`request / ${text.slice(0, 60)}`); $("#message").value = "";
+  const answer = document.createElement("div"); answer.className = "message priyu"; answer.innerHTML = '<span class="label">Priyumvada / thinking</span>Local model is working…'; transcript.append(answer);
+  try {
+    const data = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({message:text})}).then(r => r.json());
+    answer.innerHTML = '<span class="label">Priyumvada</span>'; answer.append(document.createTextNode(data.response || data.error || "No response."));
+    trace(data.sources?.length ? `recall / ${data.sources.length} local sources used` : "chat / local response");
+    if (data.response && "speechSynthesis" in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(data.response)); }
+  } catch (error) { answer.textContent = `Local connection error: ${error}`; trace("error / local request failed"); }
+  transcript.scrollTop = transcript.scrollHeight;
+}
+$("#chat").addEventListener("submit", event => { event.preventDefault(); ask($("#message").value); });
+document.querySelectorAll("[data-prompt]").forEach(button => button.addEventListener("click", () => ask(button.dataset.prompt)));
+const voiceButton = $("#speak"), voiceStatus = $("#voice-status"), Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (Recognition) {
+  const recognition = new Recognition(); recognition.lang = navigator.language || "en-IN"; recognition.interimResults = false;
+  recognition.onstart = () => { voiceButton.textContent = "Listening…"; voiceButton.classList.add("listening"); voiceStatus.textContent = "Listening. Speak now."; trace("voice / listening"); };
+  recognition.onend = () => { voiceButton.textContent = "Speak"; voiceButton.classList.remove("listening"); };
+  recognition.onerror = event => { voiceStatus.textContent = `Microphone error: ${event.error}`; trace(`voice / ${event.error}`); };
+  recognition.onresult = event => ask(event.results[0][0].transcript); voiceButton.addEventListener("click", () => recognition.start());
+} else { voiceButton.disabled = true; voiceStatus.textContent = "Voice recognition unavailable in this browser."; }
+loadStatus().catch(() => trace("status / local server unavailable"));
+</script>
+</body>
+</html>

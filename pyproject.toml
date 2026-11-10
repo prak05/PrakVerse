@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prakverse"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local-first personal AI operating environment for Prakhar Sharma."
 requires-python = ">=3.11"
 dependencies = []
@@ -20,9 +20,14 @@ ui = ["textual>=0.89"]
 [project.scripts]
 prak = "prakverse.cli:main"
 prakverse = "prakverse.cli:main"
+prak-verse = "prakverse.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+prakverse = ["web_assets/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]

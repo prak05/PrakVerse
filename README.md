@@ -100,6 +100,46 @@ prak up
 See `ARCHITECTURE.md` and `USER_GUIDE.md` for the system design and local
 service setup. The systemd unit is user-scoped and does not require `sudo`.
 
+The Debian package provides a native Tk desktop app (not Chrome/Electron) with
+typed chat, local Ollama responses, and a microphone button:
+
+```bash
+sudo apt install ./dist/prakverse_0.2.0_amd64.deb
+prakverse-app
+```
+
+The application opens as its own desktop window. It does not start Chrome.
+The **Speak** button records through PipeWire; install `faster-whisper` in the
+Python environment used by the launcher to enable local transcription.
+
+To build a Debian desktop package:
+
+```bash
+./packaging/build-deb.sh
+sudo apt install ./dist/prakverse_0.1.0_amd64.deb
+```
+
+After installation, launch **PrakVerse** from the application menu or run
+`prakverse-app`. User data is stored under `~/.local/share/prakverse`.
+
+## Central Intel
+
+PrakVerse can act as the local intelligence hub for the existing AI and career
+projects. The catalog is editable in `intel_projects.json`:
+
+```bash
+prak intel list
+prak intel sync
+prak intel sync linkedin-indo report-indo
+prak intel status
+prak recall "How does LinkedIn Indo generate career documents?"
+```
+
+The initial catalog connects LinkedIn Indo, Report Indo, MEDICAL_AI,
+MediScribe, Fasal Saarthu, smart irrigation, KSERC, and the verified Prakhar
+source documents. All projects share the same local knowledge store, while
+Central Intel preserves project names, domains, sync counts, and status.
+
 ## Phase 0: recon and scaffold
 
 The first milestone is the durable local core. It stores and searches memories

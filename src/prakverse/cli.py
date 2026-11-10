@@ -21,10 +21,11 @@ from .config import (
 from .doctor import print_doctor_report
 from .memory import MemoryStore
 from .knowledge import KnowledgeStore
+from .intel import CentralIntel
 from .agent.planner import ActionStep, PlanExecutor, TaskPlan
 from .agent.scheduler import Scheduler
 from .agent.skills import SkillLoader
-from .config import SCHEDULE_DB, SKILLS_DIR
+from .config import INTEL_CATALOG, SCHEDULE_DB, SKILLS_DIR
 from .safety import SafetyPolicy
 from .tools.audit import AuditLog
 from .tools.local import register_local_tools
@@ -44,6 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
     listen.add_argument("--audio", type=Path, help="Transcribe one local audio file.")
     listen.add_argument("--no-speak", action="store_true")
     subparsers.add_parser("up", help="Start the local Textual dashboard.")
+    web = subparsers.add_parser("app", help="Start the installable Chrome PrakVerse app.")
+    web.add_argument("--host", default="127.0.0.1")
+    web.add_argument("--port", type=int, default=8765)
+    web.add_argument("--no-browser", action="store_true")
 
     remember = subparsers.add_parser("remember", help="Store a local memory.")
     remember.add_argument("content")
@@ -86,10 +91,25 @@ def build_parser() -> argparse.ArgumentParser:
     schedule_add.add_argument("interval", type=int)
     schedule_add.add_argument("payload")
     schedule_subparsers.add_parser("run-due")
+    intel = subparsers.add_parser("intel", help="Manage the Central Intel project knowledge base.")
+    intel_subparsers = intel.add_subparsers(dest="intel_command", required=True)
+    intel_subparsers.add_parser("list")
+    intel_sync = intel_subparsers.add_parser("sync")
+    intel_sync.add_argument("projects", nargs="*", help="Optional project names.")
+    intel_subparsers.add_parser("status")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None and Path(sys.argv[0]).name in {"prakverse", "prak-verse"}:
+        from .web import serve
+        direct = argparse.ArgumentParser(prog=Path(sys.argv[0]).name)
+        direct.add_argument("--host", default="127.0.0.1")
+        direct.add_argument("--port", type=int, default=8765)
+        direct.add_argument("--no-browser", action="store_true")
+        direct_args = direct.parse_args(sys.argv[1:])
+        serve(direct_args.host, direct_args.port, not direct_args.no_browser)
+        return 0
     args = build_parser().parse_args(argv)
     store = MemoryStore(MEMORY_DB)
 
@@ -110,6 +130,10 @@ def main(argv: list[str] | None = None) -> int:
         return run_listen(args.audio, not args.no_speak)
     if args.command == "up":
         return run_dashboard()
+    if args.command == "app":
+        from .web import serve
+        serve(args.host, args.port, not args.no_browser)
+        return 0
     if args.command == "plan":
         registry = build_tool_registry()
         steps = tuple(ActionStep(tool) for tool in args.tool)
@@ -144,6 +168,25 @@ def main(argv: list[str] | None = None) -> int:
         else:
             for outcome in scheduler.run_due(lambda payload: run_skill_payload(payload)):
                 print(outcome)
+        return 0
+    if args.command == "intel":
+        intel = CentralIntel(
+            KnowledgeStore(MEMORY_DIR, embedder=OllamaClient(OLLAMA_URL, EMBED_MODEL)),
+            INTEL_CATALOG,
+        )
+        if args.intel_command == "list":
+            for project in intel.projects():
+                print(f"{project.name}: {project.path} [{project.domain}]")
+        elif args.intel_command == "sync":
+            names = set(args.projects)
+            for outcome in intel.sync(names or None):
+                print(outcome)
+        else:
+            for item in intel.status():
+                print(
+                    f"{item['name']} [{item['status']}] files={item['files']} "
+                    f"chunks={item['chunks']} skipped={item['skipped']}"
+                )
         return 0
 
     knowledge = KnowledgeStore(

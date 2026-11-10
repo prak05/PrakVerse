@@ -23,6 +23,20 @@ SECRET_PARTS = {
     "credentials.json",
 }
 SECRET_PATTERNS = ("*secret*", "*token*", "*password*", "*apikey*", "*private*key*")
+IGNORED_DIRS = {
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "dist",
+    "build",
+    ".terraform",
+    "target",
+}
 SUPPORTED_TEXT = {".txt", ".md", ".rst", ".py", ".js", ".ts", ".tsx", ".jsx", ".json", ".html", ".css", ".yaml", ".yml", ".toml", ".sh"}
 
 
@@ -47,8 +61,16 @@ def is_secret_path(path: Path) -> bool:
     return any(path.match(pattern) or path.name.lower().endswith(pattern.strip("*")) for pattern in SECRET_PATTERNS)
 
 
+def is_ignored_path(path: Path) -> bool:
+    return any(part.lower() in IGNORED_DIRS for part in path.parts)
+
+
 def read_document(path: Path) -> str | None:
-    if is_secret_path(path) or path.suffix.lower() not in SUPPORTED_TEXT | {".pdf", ".docx"}:
+    if (
+        is_secret_path(path)
+        or is_ignored_path(path)
+        or path.suffix.lower() not in SUPPORTED_TEXT | {".pdf", ".docx"}
+    ):
         return None
     try:
         if path.suffix.lower() == ".pdf":
@@ -132,7 +154,11 @@ class KnowledgeStore:
 
     def ingest(self, root: Path) -> dict[str, int]:
         root = root.expanduser().resolve()
-        paths = [root] if root.is_file() else [p for p in root.rglob("*") if p.is_file()]
+        paths = (
+            [root]
+            if root.is_file()
+            else [p for p in root.rglob("*") if p.is_file() and not is_ignored_path(p)]
+        )
         manifest: dict[str, str] = {}
         try:
             manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
@@ -162,6 +188,27 @@ class KnowledgeStore:
             counts["chunks"] += len(chunks)
         self.manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
         return counts
+
+    def clear_root(self, root: Path) -> None:
+        """Remove indexed chunks and manifest entries belonging to one project."""
+        prefix = str(root.expanduser().resolve()).rstrip("/") + "/"
+        with self._connect() as connection:
+            connection.execute(
+                "DELETE FROM chunks WHERE source = ? OR source LIKE ?",
+                (prefix.rstrip("/"), prefix + "%"),
+            )
+        try:
+            manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            manifest = {}
+        self.manifest_path.write_text(
+            json.dumps(
+                {source: signature for source, signature in manifest.items() if not source.startswith(prefix)},
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
 
     def _source_exists(self, source: str) -> bool:
         with self._connect() as connection:

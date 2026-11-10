@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PrakVerse
+Comment=Private local intelligence assistant powered by Priyumvada
+Exec=prakverse-app
+Icon=prakverse
+Terminal=false
+Categories=Utility;ArtificialIntelligence;
+Keywords=assistant;voice;AI;Priyumvada;

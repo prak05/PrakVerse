@@ -1,0 +1,44 @@
+{
+  "projects": [
+    {
+      "name": "linkedin-indo",
+      "path": "/home/prak05/Linkedin Indo",
+      "domain": "career, professional writing, resumes, cover letters"
+    },
+    {
+      "name": "report-indo",
+      "path": "/home/prak05/GITHUB/Report Indo",
+      "domain": "reports, document automation, research"
+    },
+    {
+      "name": "medical-ai",
+      "path": "/home/prak05/GITHUB/MEDICAL_AI",
+      "domain": "medical AI and software"
+    },
+    {
+      "name": "mediscribe",
+      "path": "/home/prak05/GITHUB/MediScribe-2.0",
+      "domain": "medical transcription and AI"
+    },
+    {
+      "name": "fasal-saarthu",
+      "path": "/home/prak05/GITHUB/EDUNET-AI-CLOUD-FASAL-SAARTHU-KUSHAL-KISAN",
+      "domain": "agri-tech and AI"
+    },
+    {
+      "name": "smart-irrigation",
+      "path": "/home/prak05/GITHUB/AICTE-SMART-IRRIGATION-EDUNET-PROJECT",
+      "domain": "IoT, agriculture, and AI"
+    },
+    {
+      "name": "kserc",
+      "path": "/home/prak05/GITHUB/KSERC",
+      "domain": "regulatory automation, RAG, cloud engineering"
+    },
+    {
+      "name": "prakhar-source-documents",
+      "path": "/home/prak05/Prakhar Sharma",
+      "domain": "verified personal, academic, project, and leadership evidence"
+    }
+  ]
+}

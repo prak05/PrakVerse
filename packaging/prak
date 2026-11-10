@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/prakverse"
+mkdir -p "$DATA_DIR"
+export PRAKVERSE_DATA_DIR="$DATA_DIR"
+export PRAKVERSE_INTEL_CATALOG="/usr/share/prakverse/intel_projects.json"
+export PRAKVERSE_SKILLS_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/prakverse/skills"
+export PRAKVERSE_MCP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/prakverse/mcp.json"
+export PYTHONPATH="/usr/share/prakverse${PYTHONPATH:+:$PYTHONPATH}"
+
+exec python3 -m prakverse.cli "$@"
